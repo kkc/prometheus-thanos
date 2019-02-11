@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/path: /metrics
+    prometheus.io/port: "10902"
+    prometheus.io/scrape: "true"
+  name: thanos-query
+  labels:
+    app: thanos-query
+    release: prometheus-operator
+    jobLabel: thanos
+  namespace: monitoring
+spec:
+  selector:
+    app: thanos-query
+  ports:
+  - port: 9090
+    protocol: TCP
+    targetPort: http
+    name: http-query

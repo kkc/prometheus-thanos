@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thanos-query
+  namespace: monitoring
+  labels:
+    app: thanos-query
+    thanos-peers: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: thanos-query
+      thanos-peers: "true"
+  template:
+    metadata:
+      labels:
+        app: thanos-query
+        thanos-peers: "true"
+    spec:
+      containers:
+      - name: thanos-query
+        image: improbable/thanos:v0.2.1
+        args:
+        - "query"
+        - "--log.level=debug"
+        - "--query.replica-label=prometheus_replica"
+        - "--cluster.peers=thanos-peers.monitoring.svc:10900"
+        ports:
+        - name: http
+          containerPort: 10902
+        - name: grpc
+          containerPort: 10901
+        - name: cluster
+          containerPort: 10900
+
