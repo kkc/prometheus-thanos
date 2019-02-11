@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: thanos-peers
+  namespace: monitoring
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - name: cluster
+    port: 10900
+    targetPort: cluster
+  - name: http
+    port: 10902
+    targetPort: http
+  selector:
+    thanos-peers: "true"
