@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: thanos-store
+  namespace: monitoring
+  labels:
+    app: thanos-store
+    thanos-peer: "true"
+spec:
+  serviceName: "thanos-store"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: thanos-store
+      thanos-peer: "true"
+  template:
+    metadata:
+      labels:
+        app: thanos-store
+        thanos-peer: "true"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "10902"
+    spec:
+      containers:
+      - name: thanos-store
+        # Always use explicit image tags (release or master-<date>-sha) instead of ambigous `latest` or `master`.
+        image: improbable/thanos:v0.2.1
+        args:
+        - "store"
+        - "--log.level=debug"
+        - "--data-dir=/var/thanos/store"
+        - "--cluster.peers=thanos-peers.monitoring.svc.cluster.local:10900"
+        - "--objstore.config-file=/config/thanos-store.yml"
+        ports:
+        - name: http
+          containerPort: 10902
+        - name: grpc
+          containerPort: 10901
+        - name: cluster
+          containerPort: 10900
+        volumeMounts:
+        - name: config
+          mountPath: /config/
+          readOnly: true
+        - name: data
+          mountPath: /var/thanos/store
+      volumes:
+      - name: data
+        emptyDir: {}
+      - name: config
+        configMap:
+          name: thanos-store-config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: thanos-store-config
+  namespace: monitoring
+data:
+  thanos-store.yml: |-
+    type: S3
+    config:
+      bucket: test-prometheus-thanos
+      endpoint: "s3.us-west-2.amazonaws.com"
+      insecure: false
+      signature_version2: false
+      encrypt_sse: true
+      http_config:
+          idle_conn_timeout: 0s
+
